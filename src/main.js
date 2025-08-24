@@ -144,6 +144,45 @@ function pollVaultNodes() {
     config.targetVaultAddrs.forEach(checkAndUnseal);
 }
 
+// --- Signal Handling ---
+let isShuttingDown = false;
+let pollingInterval;
+
+// Handle process termination signals
+function handleShutdown(signal) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    
+    console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
+    
+    // Clear the polling interval
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        console.log('Cleared polling interval');
+    }
+    
+    // Close any pending connections
+    if (apiClient) {
+        console.log('Closing HTTP client connections...');
+        const httpAgent = apiClient.defaults.httpsAgent || apiClient.defaults.httpAgent;
+        if (httpAgent) {
+            httpAgent.destroy();
+        }
+    }
+    
+    console.log('Shutdown complete. Goodbye! 👋');
+    process.exit(0);
+}
+
+// Register signal handlers
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // --- Service Start ---
 function main() {
     console.log('🚀 Vault Auto-Unsealer service starting...');
@@ -154,7 +193,18 @@ function main() {
     
     // Start the polling loop
     pollVaultNodes(); // Run once immediately
-    setInterval(pollVaultNodes, config.pollIntervalMs);
+    pollingInterval = setInterval(pollVaultNodes, config.pollIntervalMs);
+    
+    // Handle any uncaught exceptions
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught Exception:', error);
+        if (!isShuttingDown) {
+            handleShutdown('uncaughtException');
+        }
+    });
 }
 
-main();
+// Only start if this is the main module (not required/included)
+if (require.main === module) {
+    main();
+}
