@@ -1,0 +1,20 @@
+{
+    "name": "vault-auto-unsealer",
+    "version": "1.0.0",
+    "description": "An experimental project that automatically unseals sealed HashiCorp Vault nodes.",
+    "main": "src/main.js",
+    "scripts": {
+      "start": "node src/main.js"
+    },
+    "keywords": [
+      "vault",
+      "hashicorp",
+      "unseal",
+      "kubernetes"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "axios": "^1.7.2"
+    }
+}
