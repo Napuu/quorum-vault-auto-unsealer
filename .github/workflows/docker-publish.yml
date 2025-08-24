@@ -14,13 +14,13 @@ on:
     types: [created]
 
 # Set the access for the GITHUB_TOKEN to allow pushing to GitHub Container Registry
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
     
     steps:
       - name: Checkout repository
